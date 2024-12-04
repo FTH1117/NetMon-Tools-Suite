@@ -1,7 +1,7 @@
 # NetMon Tools Suite
 
 ## Overview
-The NetMon Tools Suite is a comprehensive toolkit designed to automate and streamline network monitoring and management processes. It integrates Zabbix and Grafana to provide real-time data visualization and performance tracking, alongside tools for automated reporting, ticket management, and project control through a user-friendly web interface.
+The NetMon Tools Suite is a comprehensive toolkit designed to automate and streamline network monitoring and management processes. It integrates Zabbix and Grafana to provide real-time data visualization and performance tracking, alongside tools for automated reporting, ticket management using Supportpal, and project control through a user-friendly web interface.
 
 ## Features
 - **Zabbix Integration**: Automate fetching and visualization of Zabbix monitoring data.
@@ -26,7 +26,7 @@ Install all the required packages using:
 pip install -r requirements.txt
 ```
 ## Configuration
-Configure your Zabbix and Grafana API details and other parameters by editing the configuration files in the config/ directory according to your setup needs.
+Configure your Zabbix, Grafana API and Supportpal details and other parameters by editing the configuration files in the config/ directory according to your setup needs.
 
 ## Usage
 To launch the Flask web application and access the web interface:
