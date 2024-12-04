@@ -1,1 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automation Managed Services Report Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='images/icon.png') }}" type="image/x-icon"/>
+
+    <style>
+        .btn-block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            font-weight: bold;
+        }
+
+        .arrow-icon {
+            position: absolute;
+            right: 15px; /* Adjust this to position the arrow */
+        }
+        
+        .sub-button {
+            padding-left: 20px; /* Adjust the value as needed */
+            width: calc(100% - 20px); /* Subtract the padding from the total width */
+            margin-top: 0; /* Removes additional top margin */
+        }
+
+        .collapse {
+            margin-top: 0;
+            transition: margin-top 0.35s ease; /* Smooth transition */
+        }
+
+        .collapse:not(.show) {
+            margin-top: 0 !important; /* Ensures no extra top margin during animation */
+        }
+
+        .collapse.show {
+            margin-top: 10px; /* Consistent space after animation completes */
+        }
+
+        .form-content {
+            margin-top: 10px; /* Adjust the value as needed */
+        } 
+
+        .admin-only {
+            display: none;
+        }
+
+        body.admin-mode .admin-only {
+            display: block; /* or 'block' if needed */
+        }
+
+        .grafana-box {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            /*font-weight: bold;*/
+            margin-right: 5px;
+        }
+        .grafana-box.set-up {
+            color: white;
+            background-color: green;
+        }
+        .grafana-box.not-set-up {
+            color: grey;
+            background-color: white;
+            border: 1px solid grey;
+        }
+
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#"><h2><strong>Automation Managed Services Report Generator</strong></h2></a>
+        <div class="ml-auto">
+            <button id="adminButton" class="btn btn-secondary" data-toggle="popover">
+                Admin
+            </button>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Panel: Actions with Collapsible Options -->
+            <div class="col-md-4">
+                <button class="btn btn-primary btn-block d-flex justify-content-between align-items-center" 
+                        data-toggle="collapse" data-target="#createProjectForm" >
+                    <span class="button-text">Create a New Project ID</span>
+                    <span class="arrow-icon">↓</span>
+                </button>
+                <div id="createProjectForm" class="collapse">
+                    <form id="createProjectFormSubmit" method="POST">
+                        <input type="hidden" name="action" value="create">
+                        <div class="form-group">
+                            <label>Project ID: (e.g., AA001234)</label>
+                            <input type="text" name="project_id" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Project Name: (e.g., IPS1)</label>
+                            <input type="text" name="project_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Host Group Name: (Same as Zabbix Host Group)</label>
+                            <input type="text" name="host_group_name" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Subscription:</label>
+                            <input type="number" id="subscriptionCount" name="subscription_count" class="form-control" min="0" max="10" value="0" required>
+                        </div>
+                        <div id="subscriptionContainer">
+                            <!-- Dynamic authorized subscription input fields will be added here -->
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Server Tags and Racks:</label>
+                            <input type="number" id="serverTagCount" name="server_tag_count" class="form-control" min="0" max="10" value="0" required>
+                        </div>
+                        <div id="serverTagRackContainer">
+                            <!-- Dynamic server tag and rack input fields will be added here -->
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="grafanaCheckbox" name="grafana" checked>
+                            <label class="form-check-label" for="grafanaCheckbox">Grafana</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Create Project</button>
+                    </form>
+                </div>
+
+                <!-- Generate Report (Grafana) -->
+                <button class="btn btn-success btn-block mt-2 d-flex justify-content-between align-items-center" 
+                        data-toggle="collapse" data-target="#generateReportGrafanaSimpleForm">
+                    <span class="button-text">Generate Report (Grafana)</span>
+                    <span class="arrow-icon">↓</span>
+                </button>
+                <div id="generateReportGrafanaSimpleForm" class="collapse">
+                    <form id="generateReportGrafanaSimpleFormSubmit" method="POST">
+                        <input type="hidden" name="action" value="export_and_generate_grafana">
+                        <!-- Form fields for month, year, and project_id -->
+                        <div class="form-group">
+                            <label>Month: (1-12)</label>
+                            <input type="text" name="month" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Year: (e.g., 2024)</label>
+                            <input type="text" name="year" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Project ID: (e.g., AA001234)</label>
+                            <input type="text" name="project_id" class="form-control" required>
+                        </div>
+                        <div class="form-group form-check">
+                            <input type="checkbox" class="form-check-input" id="llamaCheckbox" name="llama">
+                            <label class="form-check-label" for="llamaCheckbox">Llama</label>
+                        </div>
+                        <button type="submit" class="btn btn-info btn-block">Export Graph</button>
+                    </form>
+                </div>
+
+                <!-- Generate Report (Zabbix) -->
+                <button class="btn btn-success btn-block mt-2 d-flex justify-content-between align-items-center" 
+                        data-toggle="collapse" data-target="#generateReportZabbixSimpleForm">
+                    <span class="button-text">Generate Report (Zabbix)</span>
+                    <span class="arrow-icon">↓</span>
+                </button>
+                <div id="generateReportZabbixSimpleForm" class="collapse">
+                    <form id="generateReportZabbixSimpleFormSubmit" method="POST">
+                        <input type="hidden" name="action" value="export_and_generate">
+                        <!-- Form fields for month, year, and project_id -->
+                        <div class="form-group">
+                            <label>Month: (1-12)</label>
+                            <input type="text" name="month" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Year: (e.g., 2024)</label>
+                            <input type="text" name="year" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Project ID: (e.g., AA001234)</label>
+                            <input type="text" name="project_id" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-info btn-block">Export Graph</button>
+                        <!-- End of normal user form-->
+                    </form>
+                </div>
+
+                <!-- Admin Only Sections -->
+                <div class="admin-only">
+                    <!-- Your existing collapsible buttons and forms -->
+                    <!-- Generate Report (Grafana) Parent Button -->
+                    <button class="btn btn-warning btn-block mt-2 d-flex justify-content-between align-items-center"
+                            data-toggle="collapse" data-target="#generateReportGrafanaGroup" >
+                        <span class="button-text">Generate Report (Grafana)</span>
+                        <span class="arrow-icon">↓</span>
+                    </button>
+
+                    <div id="generateReportGrafanaGroup" class="collapse">
+                        <!-- Export Graphs from Grafana Button -->
+                        <button class="btn btn-secondary btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#exportGrafanaGraphForm" >
+                            <span class="button-text">Export Graphs from Grafana</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="exportGrafanaGraphForm" class="collapse sub-button">
+                            <form id="exportGrafanaGraphFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="export_grafana_graph">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-secondary btn-block">Export Grafana Graph</button>
+                            </form>
+                        </div>
+
+                        <!-- Generate Monthly Report (Grafana) Button -->
+                        <button class="btn btn-warning btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#generateGrafanaReportForm" >
+                            <span class="button-text">Generate Monthly Report (Grafana)</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="generateGrafanaReportForm" class="collapse sub-button">
+                            <form id="generateGrafanaReportFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="generate_grafana_report">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <!-- LLama Checkbox -->
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="llamaCheckboxGenerateGrafanaReport" name="llama">
+                                    <label class="form-check-label" for="llamaCheckboxGenerateGrafanaReport">Llama</label>
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-block">Generate Grafana Report</button>
+                            </form>
+                        </div>
+
+                        <!-- Export and Generate Report (Grafana) Button -->
+                        <button class="btn btn-success btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#exportAndGenerateGrafanaForm" >
+                            <span class="button-text">Export Graphs and Generate Report (Grafana)</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="exportAndGenerateGrafanaForm" class="collapse sub-button">
+                            <form id="exportAndGenerateGrafanaFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="export_and_generate_grafana">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <!-- LLama Checkbox -->
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="llamaCheckboxExportAndGenerateGrafana" name="llama">
+                                    <label class="form-check-label" for="llamaCheckboxExportAndGenerateGrafana">Llama</label>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block">Export and Generate Grafana Report</button>
+                            </form>
+                        </div>
+
+                    </div>
+
+                    <!-- Generate Report (Zabbix) Parent Button -->
+                    <button class="btn btn-warning btn-block mt-2 d-flex justify-content-between align-items-center"
+                            data-toggle="collapse" data-target="#generateReportZabbixGroup" >
+                        <span class="button-text">Generate Report (Zabbix)</span>
+                        <span class="arrow-icon">↓</span>
+                    </button>
+
+                    <div id="generateReportZabbixGroup" class="collapse">
+                        <!-- Export Zabbix Graphs Button -->
+                        <button class="btn btn-info btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#exportGraphForm" >
+                            <span class="button-text">Export Zabbix Graphs</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="exportGraphForm" class="collapse sub-button">
+                            <form id="exportGraphFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="export_graph">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-info btn-block">Export Graph</button>
+                            </form>
+                        </div>
+
+                        <!-- Export Network Graphs Button -->
+                        <button class="btn btn-secondary btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#exportNetworkGraphForm" >
+                            <span class="button-text">Export Network Graphs</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="exportNetworkGraphForm" class="collapse sub-button">
+                            <form id="exportNetworkGraphFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="export_network_graph">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-secondary btn-block">Export Network Graph</button>
+                            </form>
+                        </div>
+
+                        <!-- Generate Monthly Report Button -->
+                        <button class="btn btn-warning btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#generateReportForm" >
+                            <span class="button-text">Generate Monthly Report</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="generateReportForm" class="collapse sub-button">
+                            <form id="generateReportFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="generate_report">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-block">Generate Report</button>
+                            </form>
+                        </div>
+
+                        <!-- Export and Generate Report Button -->
+                        <button class="btn btn-success btn-block mt-2 sub-button d-flex justify-content-between align-items-center" 
+                                data-toggle="collapse" data-target="#exportAndGenerateForm" >
+                            <span class="button-text">Export Graphs and Generate Report</span>
+                            <span class="arrow-icon">↓</span>
+                        </button>
+                        <div id="exportAndGenerateForm" class="collapse sub-button">
+                            <form id="exportAndGenerateFormSubmit" method="POST" class="form-content">
+                                <input type="hidden" name="action" value="export_and_generate">
+                                <div class="form-group">
+                                    <label>Month: (1-12)</label>
+                                    <input type="text" name="month" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Year: (e.g., 2024)</label>
+                                    <input type="text" name="year" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Project ID: (e.g., AA001234)</label>
+                                    <input type="text" name="project_id" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn btn-success btn-block">Export and Generate</button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- End of Admin Form-->
+                </div>
+
+                
+                
+            <!-- End of Action Part -->
+            </div>
+
+            <!-- Right Panel: File Browser with Preview and Download -->
+            <!-- File Browser with "Go Back" Button -->
+            <div class="col-md-8">
+                <!-- Search Form with Conditional Action -->
+                <form class="form-inline mb-3" method="get" action="{{ url_for('index') if not current_path else url_for('index', path=current_path) }}">
+                    <input type="text" name="search" class="form-control mr-2" placeholder="Search files" value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                </form>
+
+                <!-- Go Back Button: Reloads main page if on root, navigates up if in a directory -->
+                {% if current_path %}
+                <button class="btn btn-secondary mb-3" 
+                        onclick="window.location.href='{{ url_for('index') if not parent_path else url_for('index', path=parent_path) }}'">
+                    Go Back
+                </button>
+                {% else %}
+                <button class="btn btn-secondary mb-3" onclick="window.location.href='{{ url_for('index') }}'">
+                    Go Back
+                </button>
+                {% endif %}
+
+                 <!-- Go Home Button -->
+                 <button class="btn btn-secondary mb-3" onclick="window.location.href='{{ url_for('index') }}'">
+                    Go Home
+                </button>
+
+                <!-- Reload Button -->
+                <button class="btn btn-secondary mb-3" onclick="location.reload()">Reload Page</button>
+
+                <!-- File List -->
+                <ul class="list-group">
+                    {% for item in items %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <a href="{{ url_for('index', path=current_path ~ '/' ~ item.name) }}">{{ item.name }}</a>
+                        <div class="d-inline-flex">
+                            {% if item.is_dir %}
+                                {% if not current_path %}
+                                    <!-- Display Grafana status box -->
+                                    <div class="grafana-status-box mr-2">
+                                        {% if item.grafana_status == 'set_up' %}
+                                            <div class="grafana-box set-up">Grafana</div>
+                                        {% else %}
+                                            <div class="grafana-box not-set-up">Grafana</div>
+                                        {% endif %}
+                                    </div>
+                                    <!-- Details Button for Project Directories Only on Homepage -->
+                                    <button class="btn btn-info btn-sm mr-2" onclick="showDetails('{{ item.name }}')">Details</button>
+                                    <!-- Setup Grafana Button for Admins -->
+                                    <button class="btn btn-success btn-sm mr-2 admin-only" onclick="setupGrafana('{{ item.name }}')">Setup Grafana</button>
+                                    <!-- Delete Button for Root-Level Directories (Admin Only) -->
+                                    <button class="btn btn-danger btn-sm mr-2 admin-only" onclick="confirmDelete('{{ item.name }}')">Delete</button>
+                                {% else %}
+                                    <!-- Delete Button for Subdirectories (Visible to all) -->
+                                    <button class="btn btn-danger btn-sm mr-2" onclick="confirmDelete('{{ current_path ~ '/' ~ item.name }}')">Delete</button>
+                                {% endif %}
+                            {% endif %}
+                
+                            <!-- Preview Buttons for Regular Files -->
+                            {% if not item.is_dir and '.' in item.name %}
+                                {% if item.name.endswith('.png') %}
+                                    <button class="btn btn-primary btn-sm mr-2" onclick="showImagePreview('{{ url_for('index', path=current_path ~ '/' ~ item.name) }}')">Preview</button>
+                                {% elif item.name.endswith('.txt') %}
+                                    <button class="btn btn-primary btn-sm mr-2" onclick="showTextPreview('{{ url_for('index', path=current_path ~ '/' ~ item.name) }}')">Preview</button>
+                                    <button class="btn btn-warning btn-sm mr-2" 
+                                            onclick="editTextFile('{{ url_for('index', path=(current_path + '/' if current_path else '') + item.name) }}', '{{ (current_path + '/' if current_path else '') + item.name }}')">
+                                        Edit
+                                    </button>
+                                {% elif item.name.endswith('.csv') and 'ping' in item.name.lower() %}
+                                    <button class="btn btn-primary btn-sm mr-2" onclick="showDowntime('{{ current_path ~ '/' ~ item.name }}')">View Downtime</button>
+                                {% endif %}
+                                <a href="{{ url_for('index', path=current_path ~ '/' ~ item.name) }}" download class="btn btn-secondary btn-sm mr-2">Download</a>
+                                <!-- Delete Button for Files (Visible to all) -->
+                                <button class="btn btn-danger btn-sm mr-2" onclick="confirmDelete('{{ current_path ~ '/' ~ item.name }}')">Delete</button>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imagePreviewModalLabel">Image Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="previewImage" src="" alt="Image Preview" style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Preview Modal -->
+    <div class="modal fade" id="textPreviewModal" tabindex="-1" aria-labelledby="textPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="textPreviewModalLabel">Text File Preview</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="previewText"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Edit Modal -->
+<div class="modal fade" id="textEditModal" tabindex="-1" aria-labelledby="textEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Text File</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="cancelTextEdit()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <textarea id="editTextArea" class="form-control" rows="20"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="cancelTextEdit()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTextEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Loading and Success/Error Modals -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-labelledby="loadingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loadingModalLabel">Processing...</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Please wait while the process completes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="successModalLabel">Result</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="successMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Details Modal -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailsModalLabel">Customer Details</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="detailsContent"><!-- Content from customer_details.txt will be shown here --></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        var isAdmin = localStorage.getItem('isAdmin') === 'true';
+        var currentPath = "{{ current_path }}";
+        var currentEditFilePath = ''; // To store the file path being edited
+
+
+        function updateAdminUI() {
+            if (isAdmin) {
+                $('body').addClass('admin-mode');
+            } else {
+                $('body').removeClass('admin-mode');
+            }
+        }
+
+
+        function getPopoverContent() {
+            var buttonText = isAdmin ? 'Disable Admin Mode' : 'Enable Admin Mode';
+            return '<button id="toggleAdminMode" class="btn btn-primary">' + buttonText + '</button>';
+        }
+
+        function showImagePreview(imageUrl) {
+            $('#previewImage').attr('src', imageUrl);
+            $('#imagePreviewModal').modal('show');
+        }
+
+        function showTextPreview(fileUrl) {
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(text => {
+                    $('#previewText').text(text);
+                    $('#textPreviewModal').modal('show');
+                });
+        }
+
+        function editTextFile(fileUrl, filePath) {
+            currentEditFilePath = filePath;
+            // Fetch the file content
+            fetch(fileUrl)
+                .then(response => response.text())
+                .then(text => {
+                    $('#editTextArea').val(text);
+                    $('#textEditModal').modal('show');
+                })
+                .catch(error => {
+                    alert('Error fetching file content: ' + error);
+                });
+        }
+
+        function cancelTextEdit() {
+            $('#textEditModal').modal('hide');
+            currentEditFilePath = '';
+        }
+
+        function saveTextEdit() {
+            const updatedContent = $('#editTextArea').val();
+            // Show loading modal
+            $('#loadingModal').modal('show');
+
+            $.ajax({
+                url: '/edit_file',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    'file_path': currentEditFilePath,
+                    'content': updatedContent
+                }),
+                success: function(response) {
+                    // Hide loading modal
+                    $('#loadingModal').modal('hide');
+
+                    if (response.success) {
+                        $('#textEditModal').modal('hide');
+                        // Show success modal
+                        $('#successMessage').html('<pre>' + response.message + '</pre>');
+                        $('#successModal').modal('show');
+                        // Reload the page when the success modal is closed
+                        $('#successModal').on('hidden.bs.modal', function () {
+                            location.reload();
+                        });
+                    } else {
+                        // Show error in the success modal
+                        $('#successMessage').html('<pre>' + response.message + '</pre>');
+                        $('#successModal').modal('show');
+                    }
+                },
+                error: function(xhr) {
+                    // Hide loading modal
+                    $('#loadingModal').modal('hide');
+                    // Attempt to parse the JSON response
+                    let errorMessage = 'An error occurred.';
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.message) {
+                            errorMessage = res.message;
+                        }
+                    } catch (e) {
+                        // If parsing fails, keep the default message
+                    }
+                    // Show error in the success modal
+                    $('#successMessage').html('<pre>Error saving file: ' + errorMessage + '</pre>');
+                    $('#successModal').modal('show');
+                }
+            });
+        }
+
+
+        function confirmDelete(filePath) {
+            $('#confirmDeleteBtn').off('click').on('click', function() {
+                deleteFile(filePath);
+                $('#deleteConfirmationModal').modal('hide');
+            });
+            $('#deleteConfirmationModal').modal('show');
+        }
+
+        function deleteFile(filePath) {
+            fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ path: filePath })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Error deleting file: ' + data.message);
+                }
+            });
+        }
+
+        function submitForm(formId) {
+            const form = $('#' + formId);
+            const formData = form.serialize();
+
+            // Show the loading modal
+            $('#loadingModal').modal('show');
+
+            // Wait until the loading modal is fully shown
+            $('#loadingModal').one('shown.bs.modal', function() {
+                // Send the AJAX request
+                $.post('/action', formData, function(response) {
+                    if (response.success) {
+                        const taskId = response.task_id;
+                        if (taskId) {
+                            // Start polling for task status
+                            pollTaskStatus(taskId);
+                        } else {
+                            // Attach event handler before hiding the modal
+                            $('#loadingModal').one('hidden.bs.modal', function () {
+                                $('#successMessage').html('<pre>' + response.message + '</pre>');
+                                $('#successModal').modal('show');
+                                // Optionally reload the page when the modal is closed
+                                $('#successModal').on('hidden.bs.modal', function () {
+                                    location.reload();
+                                });
+                            });
+                            // Hide loading modal
+                            $('#loadingModal').modal('hide');
+                        }
+                    } else {
+                        // Attach event handler before hiding the modal
+                        $('#loadingModal').one('hidden.bs.modal', function () {
+                            $('#successMessage').html('<pre>' + response.message + '</pre>');
+                            $('#successModal').modal('show');
+                        });
+                        // Hide loading modal
+                        $('#loadingModal').modal('hide');
+                    }
+                }, 'json').fail(function(xhr) {
+                    // Attach event handler before hiding the modal
+                    $('#loadingModal').one('hidden.bs.modal', function () {
+                        $('#successMessage').text(`Error: ${xhr.responseText || 'An error occurred'}`);
+                        $('#successModal').modal('show');
+                    });
+                    // Hide loading modal
+                    $('#loadingModal').modal('hide');
+                });
+            });
+        }
+
+
+
+        function pollTaskStatus(taskId) {
+            $.get(`/task_status/${taskId}`, function(response) {
+                if (response.status === 'completed') {
+                    // Attach event handler before hiding the modal
+                    $('#loadingModal').one('hidden.bs.modal', function () {
+                        $('#successMessage').html('<pre>' + response.message + '</pre>');
+                        $('#successModal').modal('show');
+                        // Optionally, reload the page when the modal is closed
+                        $('#successModal').on('hidden.bs.modal', function () {
+                            location.reload();
+                        });
+                    });
+                    // Hide loading modal
+                    $('#loadingModal').modal('hide');
+                } else if (response.status === 'failed') {
+                    // Attach event handler before hiding the modal
+                    $('#loadingModal').one('hidden.bs.modal', function () {
+                        $('#successMessage').html('<pre>' + response.message + '</pre>');
+                        $('#successModal').modal('show');
+                    });
+                    // Hide loading modal
+                    $('#loadingModal').modal('hide');
+                } else {
+                    // Task is still in progress, poll again after a delay
+                    setTimeout(function() {
+                        pollTaskStatus(taskId);
+                    }, 5000); // Poll every 5 seconds
+                }
+            }).fail(function() {
+                // Attach event handler before hiding the modal
+                $('#loadingModal').one('hidden.bs.modal', function () {
+                    $('#successMessage').text('Error checking task status.');
+                    $('#successModal').modal('show');
+                });
+                // Hide loading modal
+                $('#loadingModal').modal('hide');
+            });
+        }
+
+
+        function showDetails(projectId) {
+            $.get(`/project_details/${projectId}`, function(response) {
+                if (response.status === 'success') {
+                    $('#detailsContent').text(response.content);
+                    $('#detailsModal').modal('show');
+                } else {
+                    alert(response.message);
+                }
+            });
+        }
+
+        function showDowntime(filePath) {
+            // Show loading modal
+            $('#loadingModal').modal('show');
+
+            // Wait until the loading modal is fully shown
+            $('#loadingModal').one('shown.bs.modal', function () {
+                // Send AJAX request to /downtime
+                $.ajax({
+                    url: '/downtime',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ 'file_path': filePath }),
+                    success: function(response) {
+                        // Attach event handler before hiding the modal
+                        $('#loadingModal').one('hidden.bs.modal', function () {
+                            if (response.success) {
+                                // Show downtime in a modal
+                                let downtimeList = response.downtime;
+                                let downtimeText = downtimeList.join('\n');
+                                $('#downtimeContent').text(downtimeText);
+                                $('#downtimeModal').modal('show');
+                            } else {
+                                alert('Error: ' + response.message);
+                            }
+                        });
+                        // Hide the loading modal
+                        $('#loadingModal').modal('hide');
+                    },
+                    error: function(xhr) {
+                        // Attach event handler before hiding the modal
+                        $('#loadingModal').one('hidden.bs.modal', function () {
+                            alert('Error processing request.');
+                        });
+                        // Hide the loading modal
+                        $('#loadingModal').modal('hide');
+                    }
+                });
+            });
+        }
+
+        function setupGrafana(projectId) {
+            if (confirm(`Are you sure you want to setup Grafana for project ${projectId}?`)) {
+                // Show loading modal
+                $('#loadingModal').modal('show');
+
+                $.ajax({
+                    url: '/setup_grafana',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ 'project_id': projectId }),
+                    success: function(response) {
+                        // Hide loading modal
+                        $('#loadingModal').modal('hide');
+
+                        if (response.success) {
+                            // Show success message
+                            $('#successMessage').text(response.message);
+                            $('#successModal').modal('show');
+                            // Reload the page when the success modal is closed
+                            $('#successModal').on('hidden.bs.modal', function () {
+                                location.reload();
+                            });
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        // Hide loading modal
+                        $('#loadingModal').modal('hide');
+                        alert('Error: ' + (xhr.responseText || 'An error occurred.'));
+                    }
+                });
+            }
+        }
+
+        $(document).ready(function() {
+            // Initialize popover
+            $('#adminButton').popover({
+                html: true,
+                placement: 'bottom',
+                trigger: 'click',
+                sanitize: false, // Allows custom HTML content
+                content: function() {
+                    var buttonText = isAdmin ? 'Disable Admin Mode' : 'Enable Admin Mode';
+                    return '<button id="toggleAdminMode" class="btn btn-primary">' + buttonText + '</button>';
+                }
+            });
+
+            // Handle toggling admin mode
+            $('body').on('click', '#toggleAdminMode', function() {
+                isAdmin = !isAdmin;
+                localStorage.setItem('isAdmin', isAdmin);
+                updateAdminUI();
+                $('#adminButton').popover('hide');
+            });
+
+            updateAdminUI();
+
+            // Attach submit handler to each form
+            $('#createProjectFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('createProjectFormSubmit');
+            });
+            $('#exportGraphFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('exportGraphFormSubmit');
+            });
+            $('#generateReportFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('generateReportFormSubmit');
+            });
+            $('#exportNetworkGraphFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('exportNetworkGraphFormSubmit');
+            });
+            $('#exportGrafanaGraphFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('exportGrafanaGraphFormSubmit');
+            });
+            $('#generateGrafanaReportFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('generateGrafanaReportFormSubmit');
+            });
+            $('#exportAndGenerateFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('exportAndGenerateFormSubmit');
+            });
+            $('#exportAndGenerateGrafanaFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('exportAndGenerateGrafanaFormSubmit');
+            });
+            $('#generateReportGrafanaSimpleFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('generateReportGrafanaSimpleFormSubmit');
+            });
+            $('#generateReportZabbixSimpleFormSubmit').on('submit', function(e) {
+                e.preventDefault();
+                submitForm('generateReportZabbixSimpleFormSubmit');
+            });
+            // Attach event handlers to all collapsible buttons
+            $('[data-toggle="collapse"]').each(function() {
+                const button = $(this);
+                const arrowIcon = button.find('.arrow-icon');
+                const targetCollapse = $(button.attr('data-target'));
+
+                // Initialize arrow icons based on initial state
+                if (targetCollapse.hasClass('show')) {
+                    arrowIcon.text('↑');
+                } else {
+                    arrowIcon.text('↓');
+                }
+
+                targetCollapse.on('shown.bs.collapse hidden.bs.collapse', function (e) {
+                    if (e.target === this) { // Only proceed if the event is for this element
+                        if ($(this).hasClass('show')) {
+                            arrowIcon.text('↑'); // Up arrow when expanded
+                        } else {
+                            arrowIcon.text('↓'); // Down arrow when collapsed
+                        }
+                    }
+                });
+            });
+
+            const subscriptionCountInput = $('#subscriptionCount');
+            const subscriptionContainer = $('#subscriptionContainer');
+
+            subscriptionCountInput.on('change', updateSubscriptionFields);
+
+            function updateSubscriptionFields() {
+                const count = parseInt(subscriptionCountInput.val());
+                subscriptionContainer.empty(); // Clear existing fields
+
+                for (let i = 1; i <= count; i++) {
+                    // Create subscription input
+                    const subscriptionGroup = $('<div>').addClass('form-group');
+                    const subscriptionLabel = $('<label>').text(`Subscription ID ${i}:`);
+                    const subscriptionInput = $('<input>').attr({
+                        type: 'subscription',
+                        name: `subscription_${i}`,
+                        class: 'form-control',
+                        required: true
+                    });
+                    subscriptionGroup.append(subscriptionLabel, subscriptionInput);
+
+                    // Append to container
+                    subscriptionContainer.append(subscriptionGroup);
+                }
+            }
+
+            // Initialize fields on page load
+            updateSubscriptionFields();
+
+            const serverTagCountInput = $('#serverTagCount');
+            const serverTagRackContainer = $('#serverTagRackContainer');
+
+            serverTagCountInput.on('change', updateServerTagRackFields);
+
+            function updateServerTagRackFields() {
+                const count = parseInt(serverTagCountInput.val());
+                serverTagRackContainer.empty(); // Clear existing fields
+
+                for (let i = 1; i <= count; i++) {
+                    // Create server tag input
+                    const serverTagGroup = $('<div>').addClass('form-group');
+                    const serverTagLabel = $('<label>').text(`Server Tag ${i}:`);
+                    const serverTagInput = $('<input>').attr({
+                        type: 'text',
+                        name: `server_tag_${i}`,
+                        class: 'form-control',
+                        required: true
+                    });
+                    serverTagGroup.append(serverTagLabel, serverTagInput);
+
+                    // Create rack input
+                    const rackGroup = $('<div>').addClass('form-group');
+                    const rackLabel = $('<label>').text(`Rack ${i}:`);
+                    const rackInput = $('<input>').attr({
+                        type: 'text',
+                        name: `rack_${i}`,
+                        class: 'form-control',
+                        required: true
+                    });
+                    rackGroup.append(rackLabel, rackInput);
+
+                    // Append to container
+                    serverTagRackContainer.append(serverTagGroup, rackGroup);
+                }
+            }
+
+            // Initialize fields on page load
+            updateServerTagRackFields();
+                
+        });
+
+    </script>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="deleteConfirmationModalLabel">Confirm Delete</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+            <div class="modal-body">
+            Are you sure you want to delete this item?
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button id="confirmDeleteBtn" type="button" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Downtime Modal -->
+    <div class="modal fade" id="downtimeModal" tabindex="-1" aria-labelledby="downtimeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Downtime Periods</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <pre id="downtimeContent"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
 

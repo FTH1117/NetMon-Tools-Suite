@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Browser - {{ current_path }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h3>Browsing: {{ current_path }}</h3>
+
+        <!-- Search Form -->
+        <form class="form-inline mb-3" method="get" action="{{ url_for('index', path=current_path) }}">
+            <input type="text" name="search" class="form-control mr-2" placeholder="Search files" value="{{ search_query }}">
+           <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <ul class="list-group">
+            {% for file in files %}
+            <li class="list-group-item">
+                <a href="{{ url_for('browse', path=current_path ~ '/' ~ file) }}">{{ file }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+        
+        <br>
+        <a href="/" class="btn btn-secondary">Back to Home</a>
+    </div>
+</body>
+</html>
+
+
