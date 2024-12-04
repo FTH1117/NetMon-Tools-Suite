@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  production:
+    build:
+      context: .
+      args:
+        INCLUDE_ALMALINUX: "false"
+    container_name: managed_service_prod
+    environment:
+      - PORT=5001
+    volumes:
+      - /home/almalinux:/home/almalinux  # Mount the output directory
+    ports:
+      - "5001:5001"
+    restart: always
+
+  staging:
+    build:
+      context: .
+      args:
+        INCLUDE_ALMALINUX: "true"
+    container_name: managed_service_staging
+    environment:
+      - PORT=5002
+    # Do not mount the volume for staging
+    # volumes:
+    #   - /home/almalinux:/home/almalinux  # Commented out
+    ports:
+      - "5002:5002"
+    restart: always
