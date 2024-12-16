@@ -100,14 +100,31 @@ python generate_report_grafana.py --month 11 --year 2024 --customer AA001234 --l
 ```
 
 ## File Structure
-- **app.py**: Core Flask application logic.
-- **zabbix_graph_export.py**: Zabbix graph extraction script.
-- **grafana_graph_export.py**: Grafana graph export script.
-- **generate_report.py**: SLA report generation.
-- **generate_report_grafana.py**: Grafana-based report generation with optional Llama analysis.
-- **requirements.txt**: Dependencies list.
-- **docker-compose.yml**: Multi-service container configuration.
-- **.gitlab-ci.yml**: CI/CD pipeline configuration.
+
+### Core Application
+- **app.py**: Core Flask application for managing project creation, exporting graphs, and generating reports.
+- **requirements.txt**: List of Python dependencies for the project.
+- **Dockerfile**: Docker configuration for building the application container.
+- **docker-compose.yml**: Multi-service configuration for production and staging environments.
+- **.gitlab-ci.yml**: CI/CD pipeline configuration for deploying the system to staging or production.
+
+### Scripts
+- **zabbix_graph_export.py**: Exports performance and capacity graphs from Zabbix.
+- **grafana_graph_export.py**: Exports visual graphs from Grafana dashboards.
+- **generate_report.py**: Generates SLA and performance reports using Zabbix data.
+- **generate_report_grafana.py**: Generates SLA and performance reports using Grafana data with optional Llama analysis.
+- **ticket_fetcher.py**: Fetches and integrates customer tickets into SLA reports.
+- **llama_analysis.py**: Performs AI-based analysis on graphs using Llama for trend evaluation.
+- **test_availability.py**: Tests system and network availability.
+- **test_connection.py**: Simple script to test connectivity to an external API.
+
+### HTML Templates
+- **index.html**: Main interface for project and report management.
+- **browse.html**: Interface for browsing customer and project files.
+
+### Supporting Tools
+- **network_graph_export.py**: Extracts and organizes network-related graphs from Zabbix.
+- **grafana_create.py**: Creates Grafana dashboards dynamically based on Zabbix data.
 
 ## Deployment Details
 
