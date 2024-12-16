@@ -1,0 +1,33 @@
+stages:
+  - deploy
+
+before_script:
+  - echo "Running on branch $CI_COMMIT_REF_NAME"
+  - docker info
+
+deploy_production:
+  stage: deploy
+  only:
+    - main
+  tags:
+    - web
+  script:
+    - echo "Deploying to production"
+    - docker compose stop production
+    - docker compose build production
+    - docker compose up -d production
+
+deploy_staging:
+  stage: deploy
+  only:
+    - staging
+  tags:
+    - web
+  script:
+    - echo "Deploying to staging"
+    - mkdir -p ./almalinux
+    - cp -r /home/almalinux/A* ./almalinux/
+    - docker compose stop staging
+    - docker compose build staging
+    - docker compose up -d staging
+    - rm -rf ./almalinux
